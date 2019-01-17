@@ -19,6 +19,17 @@ class AnswerHandler:
 class PlazaService:
     def __init__(self, service_url):
         self.service_url = service_url
+        self.INTERNAL_FUNCTION_NAMES = {
+            '__ping': self.__answer_ping
+       }
+
+    async def __answer_ping(self, websocket, message):
+        (_msg_type, _value, message_id) = message
+        await websocket.send(json.dumps({
+                'message_id': message_id,
+                'success': True,
+                'result': 'PONG',
+        }))
 
     def __parse(self, message):
         parsed = json.loads(message)
@@ -31,14 +42,26 @@ class PlazaService:
             (msg_type, value, message_id) = self.__parse(message)
 
             if msg_type == protocol.CALL_MESSAGE_TYPE:
-                if value['function_name'] == '__ping':
+                function_name = value['function_name']
+
+                if function_name in self.INTERNAL_FUNCTION_NAMES:
+                    await self.INTERNAL_FUNCTION_NAMES[function_name](websocket, (msg_type, value, message_id))
+                else:
+                    try:
+                        response = self.handle_call(function_name, value['arguments'])
+                    except:
+                        logging.warn(traceback.format_exc())
+                        await websocket.send(json.dumps({
+                            'message_id': message_id,
+                            'success': False,
+                        }))
+                        continue
+
                     await websocket.send(json.dumps({
                         'message_id': message_id,
                         'success': True,
-                        'result': 'PONG',
+                        'result': response
                     }))
-                else:
-                    self.handle_call(value['function_name'], value['arguments'])
 
             else:
                 raise Exception('Unknown message type on ({})'.format(message))
