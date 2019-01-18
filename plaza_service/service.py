@@ -6,6 +6,7 @@ import traceback
 import time
 
 from . import protocol
+from .service_configuration import ServiceConfiguration
 
 SLEEP_BETWEEN_RETRIES = 5
 
@@ -19,22 +20,17 @@ class AnswerHandler:
 class PlazaService:
     def __init__(self, service_url):
         self.service_url = service_url
-        self.INTERNAL_FUNCTION_NAMES = {
-            '__ping': self.__answer_ping
-       }
+        self.INTERNAL_FUNCTION_NAMES = {"__ping": self.__answer_ping}
 
     async def __answer_ping(self, websocket, message):
         (_msg_type, _value, message_id) = message
-        await websocket.send(json.dumps({
-                'message_id': message_id,
-                'success': True,
-                'result': 'PONG',
-        }))
+        await websocket.send(
+            json.dumps({"message_id": message_id, "success": True, "result": "PONG"})
+        )
 
     def __parse(self, message):
         parsed = json.loads(message)
-        return (parsed['type'], parsed['value'], parsed['message_id'])
-
+        return (parsed["type"], parsed["value"], parsed["message_id"])
 
     async def __interact(self, websocket):
         async for message in websocket:
@@ -42,40 +38,62 @@ class PlazaService:
             (msg_type, value, message_id) = self.__parse(message)
 
             if msg_type == protocol.CALL_MESSAGE_TYPE:
-                function_name = value['function_name']
+                function_name = value["function_name"]
 
                 if function_name in self.INTERNAL_FUNCTION_NAMES:
-                    await self.INTERNAL_FUNCTION_NAMES[function_name](websocket, (msg_type, value, message_id))
+                    await self.INTERNAL_FUNCTION_NAMES[function_name](
+                        websocket, (msg_type, value, message_id)
+                    )
                 else:
                     try:
-                        response = self.handle_call(function_name, value['arguments'])
+                        response = self.handle_call(function_name, value["arguments"])
                     except:
                         logging.warn(traceback.format_exc())
-                        await websocket.send(json.dumps({
-                            'message_id': message_id,
-                            'success': False,
-                        }))
+                        await websocket.send(
+                            json.dumps({"message_id": message_id, "success": False})
+                        )
                         continue
 
-                    await websocket.send(json.dumps({
-                        'message_id': message_id,
-                        'success': True,
-                        'result': response
-                    }))
+                    await websocket.send(
+                        json.dumps(
+                            {
+                                "message_id": message_id,
+                                "success": True,
+                                "result": response,
+                            }
+                        )
+                    )
 
             else:
-                raise Exception('Unknown message type on ({})'.format(message))
+                raise Exception("Unknown message type on ({})".format(message))
 
     async def __connect(self):
         async with websockets.connect(self.service_url) as websocket:
-            logging.debug('Connected')
+            logging.debug("Connected")
+            configuration = self.handle_configuration()
+            if not isinstance(configuration, ServiceConfiguration):
+                raise TypeError(
+                    "Configuration has to inherit plaza_service.ServiceConfiguration"
+                )
+
+            logging.debug(
+                "Setting configuration: {}".format(
+                    json.dumps(configuration.serialize(), indent=4)
+                )
+            )
+
+            await websocket.send(
+                json.dumps(
+                    {"type": "configuration", "value": configuration.serialize()}
+                )
+            )
+
             await self.__interact(websocket)
 
     def run(self):
         while True:
             try:
-                asyncio.get_event_loop().run_until_complete(
-                    self.__connect())
+                asyncio.get_event_loop().run_until_complete(self.__connect())
             except KeyboardInterrupt:
                 return
             except:
