@@ -99,6 +99,6 @@ class PlazaService:
             except:
                 logging.warn(traceback.format_exc())
 
-            logging.debug("Waiting {} for reconnection".format(SLEEP_BETWEEN_RETRIES))
+            logging.debug("Waiting {}s for reconnection".format(SLEEP_BETWEEN_RETRIES))
             time.sleep(SLEEP_BETWEEN_RETRIES)
             logging.debug("Reconnecting")
