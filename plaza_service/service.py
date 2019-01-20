@@ -46,7 +46,7 @@ class PlazaService:
                     )
                 else:
                     try:
-                        response = self.handle_call(function_name, value["arguments"])
+                        response = await self.handle_call(function_name, value["arguments"])
                     except:
                         logging.warn(traceback.format_exc())
                         await websocket.send(
