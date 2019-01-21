@@ -10,6 +10,9 @@ from .service_configuration import ServiceConfiguration
 
 SLEEP_BETWEEN_RETRIES = 5
 
+class ExtraData:
+    def __init__(self, user_id):
+        self.user_id = user_id
 
 class AnswerHandler:
     def __init__(self, message_id, websocket):
@@ -30,23 +33,23 @@ class PlazaService:
 
     def __parse(self, message):
         parsed = json.loads(message)
-        return (parsed["type"], parsed["value"], parsed["message_id"])
+        return (parsed["type"], parsed["value"], parsed["message_id"], ExtraData(parsed["user_id"]))
 
     async def __interact(self, websocket):
         async for message in websocket:
             logging.debug("Received: {}".format(message))
-            (msg_type, value, message_id) = self.__parse(message)
+            (msg_type, value, message_id, extra_data) = self.__parse(message)
 
             if msg_type == protocol.CALL_MESSAGE_TYPE:
                 function_name = value["function_name"]
 
                 if function_name in self.INTERNAL_FUNCTION_NAMES:
                     await self.INTERNAL_FUNCTION_NAMES[function_name](
-                        websocket, (msg_type, value, message_id)
+                        websocket, (msg_type, value, message_id), extra_data
                     )
                 else:
                     try:
-                        response = await self.handle_call(function_name, value["arguments"])
+                        response = await self.handle_call(function_name, value["arguments"], extra_data)
                     except:
                         logging.warn(traceback.format_exc())
                         await websocket.send(
@@ -102,3 +105,4 @@ class PlazaService:
             logging.debug("Waiting {}s for reconnection".format(SLEEP_BETWEEN_RETRIES))
             time.sleep(SLEEP_BETWEEN_RETRIES)
             logging.debug("Reconnecting")
+
