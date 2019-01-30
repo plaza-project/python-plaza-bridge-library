@@ -2,25 +2,51 @@ import re
 import html
 
 CHUNKS_RE = re.compile(r"([^<>]+|<[^>]+>)")
-CHUNK_TYPES = ("registration_code",)
+CHUNK_TYPES = ("registration_code", "u", "a")
+CONTAINER_CHUNKS = {"u": {"fields": {}}}
+
 
 def parse_text(text, replacements={}):
     chunks = CHUNKS_RE.findall(text)
-    serialized_chunks = []
+
+    parent_chunks = []
+    current_chunk = serialized_chunks = {"content": []}
+
     for chunk in chunks:
         if chunk.startswith("<"):
             assert chunk.endswith(">")
             chunk = chunk[1:-1].strip()
-            if chunk not in CHUNK_TYPES:
-                raise Exception("Unknown chunk type “{}”".format(chunk))
-            if replacements is not None and chunk in replacements:
-                serialized_chunks.append(replacements[chunk])
-            else:
-                serialized_chunks.append({"type": "placeholder", "value": chunk})
-        else:
-            serialized_chunks.append({"type": "text", "value": html.escape(chunk)})
+            tagName = chunk
+            endTag = tagName.startswith("/")
+            if endTag:
+                tagName = tagName[1:]
 
-    return serialized_chunks
+            if replacements is not None and chunk in replacements:
+                current_chunk["content"].append(replacements[chunk])
+            elif tagName not in CHUNK_TYPES:
+                raise Exception("Unknown chunk type “{}”".format(chunk))
+            else:
+                if endTag:
+                    assert len(parent_chunks) > 0
+                    assert current_chunk["tag"] == tagName
+                    parent_chunk = parent_chunks.pop()
+                    parent_chunk["content"].append(current_chunk)
+                    current_chunk = parent_chunk
+
+                elif tagName in CONTAINER_CHUNKS:
+                    parent_chunks.append(current_chunk)
+                    current_chunk = {"type": "tag", "tag": tagName, "content": []}
+                else:
+                    current_chunk["content"].append(
+                        {"type": "placeholder", "value": chunk}
+                    )
+        else:
+            current_chunk["content"].append(
+                {"type": "text", "value": html.escape(chunk)}
+            )
+
+    assert len(parent_chunks) == 0
+    return serialized_chunks["content"]
 
 
 class MessageBasedServiceRegistration:
