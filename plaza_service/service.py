@@ -24,6 +24,7 @@ class PlazaService:
     def __init__(self, service_url):
         self.service_url = service_url
         self.INTERNAL_FUNCTION_NAMES = {"__ping": self.__answer_ping}
+        self.__registerer = None
 
     async def __answer_ping(self, websocket, message):
         (_msg_type, _value, message_id) = message
@@ -67,6 +68,27 @@ class PlazaService:
                         )
                     )
 
+            elif msg_type == protocol.GET_HOW_TO_SERVICE_REGISTRATION:
+                if self.__registerer is None:
+                    await websocket.send(
+                        json.dumps(
+                            {
+                                "message_id": message_id,
+                                "success": True,
+                                "result": None,
+                            }
+                        )
+                    )
+                else:
+                    await websocket.send(
+                        json.dumps(
+                            {
+                                "message_id": message_id,
+                                "success": True,
+                                "result": self.__registerer.serialize(extra_data),
+                            }
+                        )
+                    )
             else:
                 raise Exception("Unknown message type on ({})".format(message))
 
@@ -74,6 +96,7 @@ class PlazaService:
         async with websockets.connect(self.service_url) as websocket:
             logging.debug("Connected")
             configuration = self.handle_configuration()
+            self.__registerer = configuration.registration
             if not isinstance(configuration, ServiceConfiguration):
                 raise TypeError(
                     "Configuration has to inherit plaza_service.ServiceConfiguration"
