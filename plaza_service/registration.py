@@ -69,5 +69,5 @@ class MessageBasedServiceRegistration:
         text = self.get_call_to_action_text()
         emerging_text_chunks = parse_text(text, replacements)
 
-        return {"type": "scripted-form", "value": {"form": emerging_text_chunks}}
+        return {"type": "message", "value": {"form": emerging_text_chunks}}
 
