@@ -89,6 +89,34 @@ class PlazaService:
                             }
                         )
                     )
+
+            elif msg_type == protocol.REGISTRATION_MESSAGE:
+                if self.__registerer is None:
+                    await websocket.send(
+                        json.dumps(
+                            {
+                                "message_id": message_id,
+                                "success": False,
+                                "error": "No registerer available",
+                            }
+                        )
+                    )
+                else:
+                    result = await self.__registerer.register(value, extra_data)
+                    message = None
+                    if result != True:
+                        result, message = result
+
+                    await websocket.send(
+                        json.dumps(
+                            {
+                                "message_id": message_id,
+                                "success": result,
+                                "message": message,
+                            }
+                        )
+                    )
+
             else:
                 raise Exception("Unknown message type on ({})".format(message))
 
