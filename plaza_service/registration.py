@@ -4,7 +4,12 @@ import html
 
 CHUNKS_RE = re.compile(r"([^<>]+|<[^>]+>)")
 CHUNK_TYPES = ("u", "a", "input", "value", "autolink")
-CONTAINER_CHUNKS = {"u": {"fields": {}}, "autolink": {"fields": {}}}
+CONTAINER_CHUNKS = {
+    "u": {"fields": {}},
+    "autolink": {"fields": {}},
+    "a": {"fields": {"href"}},
+}
+
 
 def parse_text(text, replacements={}):
     chunks = CHUNKS_RE.findall(text)
@@ -53,7 +58,6 @@ def parse_text(text, replacements={}):
                         "content": [],
                     }
 
-
                 elif tagName in CONTAINER_CHUNKS:
                     parent_chunks.append(current_chunk)
                     current_chunk = {
@@ -69,7 +73,7 @@ def parse_text(text, replacements={}):
                             "type": "tag",
                             "tag": tagName,
                             "properties": properties,
-                            "content": []
+                            "content": [],
                         }
                     )
         else:
@@ -120,4 +124,3 @@ class FormBasedServiceRegistration:
         emerging_text_chunks = parse_text(text, replacements)
 
         return {"type": "form", "value": {"form": emerging_text_chunks}}
-

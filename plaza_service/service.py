@@ -34,7 +34,7 @@ class PlazaService:
 
     def __parse(self, message):
         parsed = json.loads(message)
-        return (parsed["type"], parsed["value"], parsed["message_id"], ExtraData(parsed["user_id"]))
+        return (parsed["type"], parsed["value"], parsed["message_id"], ExtraData(parsed.get("user_id")))
 
     async def __interact(self, websocket):
         async for message in websocket:
@@ -117,8 +117,35 @@ class PlazaService:
                         )
                     )
 
+            elif msg_type == protocol.OAUTH_RETURN:
+                if self.__registerer is None:
+                    await websocket.send(
+                        json.dumps(
+                            {
+                                "message_id": message_id,
+                                "success": False,
+                                "error": "No registerer available",
+                            }
+                        )
+                    )
+                else:
+                    result = await self.__registerer.register(value, extra_data)
+                    message = None
+                    if result != True:
+                        result, message = result
+
+                    await websocket.send(
+                        json.dumps(
+                            {
+                                "message_id": message_id,
+                                "success": result,
+                                "message": message,
+                            }
+                        )
+                    )
+
             else:
-                raise Exception("Unknown message type on ({})".format(message))
+                raise Exception("Unknown message type “{}”".format(msg_type))
 
     async def __connect(self):
         async with websockets.connect(self.service_url) as websocket:
