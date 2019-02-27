@@ -54,3 +54,20 @@ class BlockArgument:
     def serialize(self):
         return {"type": ALLOWED_ARGUMENT_TYPES[self.type], "default": self.default}
 
+
+class DynamicBlockArgument:
+    def __init__(self, type, callback):
+        if type not in ALLOWED_ARGUMENT_TYPES:
+            raise TypeError("Type “{}” not allowed".format(type))
+
+        self.type = type
+        self.callback = callback
+
+    def serialize(self):
+        return {
+            "type": ALLOWED_ARGUMENT_TYPES[self.type],
+            "values": {
+                "callback": self.callback,
+            },
+        }
+

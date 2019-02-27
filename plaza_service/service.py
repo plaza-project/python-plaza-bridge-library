@@ -144,12 +144,32 @@ class PlazaService:
                         )
                     )
 
+            elif msg_type == protocol.DATA_CALLBACK:
+                try:
+                    response = await self.handle_data_callback(value['callback'], extra_data)
+                except:
+                    logging.warn(traceback.format_exc())
+                    await websocket.send(
+                        json.dumps({"message_id": message_id, "success": False})
+                    )
+                    continue
+
+                await websocket.send(
+                    json.dumps(
+                        {
+                            "message_id": message_id,
+                            "success": True,
+                            "result": response,
+                        }
+                    )
+                )
+
             else:
                 raise Exception("Unknown message type “{}”".format(msg_type))
 
     async def __connect(self):
         async with websockets.connect(self.service_url) as websocket:
-            logging.debug("Connected")
+            logging.info("Connected successfully")
             configuration = self.handle_configuration()
             self.__registerer = configuration.registration
             if not isinstance(configuration, ServiceConfiguration):
