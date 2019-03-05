@@ -3,11 +3,12 @@ import re
 import html
 
 CHUNKS_RE = re.compile(r"([^<>]+|<[^>]+>)")
-CHUNK_TYPES = ("u", "a", "input", "value", "autolink")
+CHUNK_TYPES = ("u", "a", "input", "value", "autolink", "console")
 CONTAINER_CHUNKS = {
     "u": {"fields": {}},
     "autolink": {"fields": {}},
     "a": {"fields": {"href"}},
+    "console": {"fields": {}},
 }
 
 
