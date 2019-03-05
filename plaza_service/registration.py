@@ -103,7 +103,7 @@ class MessageBasedServiceRegistration:
                 }
             }
 
-        text = self.get_call_to_action_text()
+        text = self.get_call_to_action_text(extra_data)
         emerging_text_chunks = parse_text(text, replacements)
 
         return {"type": "message", "value": {"form": emerging_text_chunks}}
@@ -121,7 +121,7 @@ class FormBasedServiceRegistration:
         if extra_data is not None:
             replacements = {"input": lambda x: x}
 
-        text = self.get_call_to_action_text()
+        text = self.get_call_to_action_text(extra_data)
         emerging_text_chunks = parse_text(text, replacements)
 
         return {"type": "form", "value": {"form": emerging_text_chunks}}
