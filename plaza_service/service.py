@@ -10,9 +10,11 @@ from .service_configuration import ServiceConfiguration
 
 SLEEP_BETWEEN_RETRIES = 5
 
+
 class ExtraData:
     def __init__(self, user_id):
         self.user_id = user_id
+
 
 class AnswerHandler:
     def __init__(self, message_id, websocket):
@@ -25,6 +27,8 @@ class PlazaService:
         self.service_url = service_url
         self.INTERNAL_FUNCTION_NAMES = {"__ping": self.__answer_ping}
         self.__registerer = None
+        self.loop = None
+        self.websocket = None
 
     async def __answer_ping(self, websocket, message):
         (_msg_type, _value, message_id) = message
@@ -32,9 +36,27 @@ class PlazaService:
             json.dumps({"message_id": message_id, "success": True, "result": "PONG"})
         )
 
+    async def emit_event(self, to_user, event):
+        await self.websocket.send(
+            json.dumps(
+                {"type": protocol.NOTIFICATION, "to_user": to_user, "value": event}
+            )
+        )
+
+    def emit_event_sync(self, to_user, event):
+        result = asyncio.run_coroutine_threadsafe(
+            self.emit_event(to_user, event), self.loop
+        )
+        return result
+
     def __parse(self, message):
         parsed = json.loads(message)
-        return (parsed["type"], parsed["value"], parsed["message_id"], ExtraData(parsed.get("user_id")))
+        return (
+            parsed["type"],
+            parsed["value"],
+            parsed["message_id"],
+            ExtraData(parsed.get("user_id")),
+        )
 
     async def __interact(self, websocket):
         async for message in websocket:
@@ -50,7 +72,9 @@ class PlazaService:
                     )
                 else:
                     try:
-                        response = await self.handle_call(function_name, value["arguments"], extra_data)
+                        response = await self.handle_call(
+                            function_name, value["arguments"], extra_data
+                        )
                     except:
                         logging.warn(traceback.format_exc())
                         await websocket.send(
@@ -72,11 +96,7 @@ class PlazaService:
                 if self.__registerer is None:
                     await websocket.send(
                         json.dumps(
-                            {
-                                "message_id": message_id,
-                                "success": True,
-                                "result": None,
-                            }
+                            {"message_id": message_id, "success": True, "result": None}
                         )
                     )
                 else:
@@ -146,7 +166,9 @@ class PlazaService:
 
             elif msg_type == protocol.DATA_CALLBACK:
                 try:
-                    response = await self.handle_data_callback(value['callback'], extra_data)
+                    response = await self.handle_data_callback(
+                        value["callback"], extra_data
+                    )
                 except:
                     logging.warn(traceback.format_exc())
                     await websocket.send(
@@ -156,11 +178,7 @@ class PlazaService:
 
                 await websocket.send(
                     json.dumps(
-                        {
-                            "message_id": message_id,
-                            "success": True,
-                            "result": response,
-                        }
+                        {"message_id": message_id, "success": True, "result": response}
                     )
                 )
 
@@ -169,6 +187,7 @@ class PlazaService:
 
     async def __connect(self):
         async with websockets.connect(self.service_url) as websocket:
+            self.websocket = websocket
             logging.info("Connected successfully")
             configuration = self.handle_configuration()
             self.__registerer = configuration.registration
@@ -192,6 +211,7 @@ class PlazaService:
             await self.__interact(websocket)
 
     def run(self):
+        self.loop = asyncio.get_event_loop()
         while True:
             try:
                 asyncio.get_event_loop().run_until_complete(self.__connect())
