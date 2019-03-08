@@ -204,7 +204,7 @@ class PlazaService:
 
             await websocket.send(
                 json.dumps(
-                    {"type": "configuration", "value": configuration.serialize()}
+                    {"type": protocol.CONFIGURATION, "value": configuration.serialize()}
                 )
             )
 
