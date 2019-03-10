@@ -1,6 +1,19 @@
 import enum
 
 
+class BlockContextArgument:
+    def __getitem__(self, index):
+        return {"type": "argument", "index": index}
+
+
+class BlockContextClass:
+    def __init__(self):
+        self.ARGUMENTS = BlockContextArgument()
+
+
+BlockContext = BlockContextClass()
+
+
 class BlockType(enum.Enum):
     TRIGGER = "trigger"
     OPERATION = "operation"
@@ -32,6 +45,25 @@ class ServiceBlock:
             "arguments": list(map(lambda a: a.serialize(), self.arguments)),
             "block_type": self.block_type.value,
             "block_result_type": self.block_result_type,
+        }
+
+
+class ServiceTriggerBlock:
+    def __init__(self, id, function_name, message, arguments=[], save_to=None):
+        self.id = id
+        self.function_name = function_name
+        self.message = message
+        self.arguments = arguments
+        self.save_to = save_to
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "function_name": self.function_name,
+            "message": self.message,
+            "arguments": list(map(lambda a: a.serialize(), self.arguments)),
+            "save_to": self.save_to,
+            "block_type": BlockType.TRIGGER.value,
         }
 
 

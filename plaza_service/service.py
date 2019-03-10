@@ -36,7 +36,7 @@ class PlazaService:
             json.dumps({"message_id": message_id, "success": True, "result": "PONG"})
         )
 
-    async def emit_event(self, to_user, key, event):
+    async def emit_event(self, to_user, key, content=None, event=None):
         await self.websocket.send(
             json.dumps(
                 {
@@ -44,13 +44,14 @@ class PlazaService:
                     "key": key,
                     "to_user": to_user,
                     "value": event,
+                    "content": content,
                 }
             )
         )
 
-    def emit_event_sync(self, to_user, key, event):
+    def emit_event_sync(self, to_user, key, content=None, event=None):
         result = asyncio.run_coroutine_threadsafe(
-            self.emit_event(to_user, key, event), self.loop
+            self.emit_event(to_user, key, event=event, content=content), self.loop
         )
         return result
 
