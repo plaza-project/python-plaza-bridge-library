@@ -36,16 +36,21 @@ class PlazaService:
             json.dumps({"message_id": message_id, "success": True, "result": "PONG"})
         )
 
-    async def emit_event(self, to_user, event):
+    async def emit_event(self, to_user, key, event):
         await self.websocket.send(
             json.dumps(
-                {"type": protocol.NOTIFICATION, "to_user": to_user, "value": event}
+                {
+                    "type": protocol.NOTIFICATION,
+                    "key": key,
+                    "to_user": to_user,
+                    "value": event,
+                }
             )
         )
 
-    def emit_event_sync(self, to_user, event):
+    def emit_event_sync(self, to_user, key, event):
         result = asyncio.run_coroutine_threadsafe(
-            self.emit_event(to_user, event), self.loop
+            self.emit_event(to_user, key, event), self.loop
         )
         return result
 
