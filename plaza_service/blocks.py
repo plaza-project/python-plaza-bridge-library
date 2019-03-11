@@ -49,12 +49,26 @@ class ServiceBlock:
 
 
 class ServiceTriggerBlock:
-    def __init__(self, id, function_name, message, arguments=[], save_to=None):
+    def __init__(
+        self,
+        id,
+        function_name,
+        message,
+        arguments=[],
+        save_to=None,
+        expected_value=None,
+        key=None,
+    ):
         self.id = id
         self.function_name = function_name
         self.message = message
         self.arguments = arguments
         self.save_to = save_to
+        self.expected_value = expected_value
+        if key is not None:
+            self.key = key
+        else:
+            self.key = function_name
 
     def serialize(self):
         return {
@@ -63,7 +77,9 @@ class ServiceTriggerBlock:
             "message": self.message,
             "arguments": list(map(lambda a: a.serialize(), self.arguments)),
             "save_to": self.save_to,
+            "expected_value": self.expected_value,
             "block_type": BlockType.TRIGGER.value,
+            "key": self.key,
         }
 
 
