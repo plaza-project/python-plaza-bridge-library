@@ -1,6 +1,6 @@
 from setuptools import setup
 
-setup(name='plaza-service',
+setup(name='plaza_service',
       version='0.1',
       description='Helper to build plaza services.',
       author='kenkeiras',
