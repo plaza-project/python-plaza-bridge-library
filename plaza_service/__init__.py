@@ -8,5 +8,6 @@ from .blocks import (
     BlockType,
     VariableBlockArgument,
     BlockContext,
+    VariableClass,
 )
 from .registration import MessageBasedServiceRegistration, FormBasedServiceRegistration

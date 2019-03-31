@@ -91,6 +91,11 @@ ALLOWED_ARGUMENT_TYPES = {
 }
 
 
+class VariableClass(enum.Enum):
+    SINGLE = "single"  # Like atoms in lisp
+    LIST = "list"
+
+
 class BlockArgument:
     def __init__(self, type, default):
         if type not in ALLOWED_ARGUMENT_TYPES:
@@ -104,11 +109,15 @@ class BlockArgument:
 
 
 class VariableBlockArgument:
-    def __init__(self):
-        pass
+    def __init__(self, _class=None):
+        if _class is not None:
+            assert isinstance(_class, VariableClass)
+            self.variable_class = _class.value
+        else:
+            self.variable_class = VariableClass.SINGLE.value
 
     def serialize(self):
-        return {"type": "variable"}
+        return {"type": "variable", "class": self.variable_class}
 
 
 class DynamicBlockArgument:
