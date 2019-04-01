@@ -29,6 +29,7 @@ class ServiceBlock:
         block_type,
         block_result_type=None,
         arguments=[],
+        save_to=None,
     ):
         self.id = id
         self.function_name = function_name
@@ -36,6 +37,7 @@ class ServiceBlock:
         self.block_type = block_type
         self.block_result_type = block_result_type
         self.arguments = arguments
+        self.save_to = save_to
 
     def serialize(self):
         return {
@@ -45,6 +47,7 @@ class ServiceBlock:
             "arguments": list(map(lambda a: a.serialize(), self.arguments)),
             "block_type": self.block_type.value,
             "block_result_type": self.block_result_type,
+            "save_to": self.save_to,
         }
 
 
