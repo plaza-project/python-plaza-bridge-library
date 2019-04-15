@@ -29,6 +29,7 @@ class ServiceBlock:
         block_type,
         block_result_type=None,
         arguments=[],
+        save_to=None,
     ):
         self.id = id
         self.function_name = function_name
@@ -36,6 +37,7 @@ class ServiceBlock:
         self.block_type = block_type
         self.block_result_type = block_result_type
         self.arguments = arguments
+        self.save_to = save_to
 
     def serialize(self):
         return {
@@ -45,6 +47,7 @@ class ServiceBlock:
             "arguments": list(map(lambda a: a.serialize(), self.arguments)),
             "block_type": self.block_type.value,
             "block_result_type": self.block_result_type,
+            "save_to": self.save_to,
         }
 
 
@@ -91,6 +94,11 @@ ALLOWED_ARGUMENT_TYPES = {
 }
 
 
+class VariableClass(enum.Enum):
+    SINGLE = "single"  # Like atoms in lisp
+    LIST = "list"
+
+
 class BlockArgument:
     def __init__(self, type, default):
         if type not in ALLOWED_ARGUMENT_TYPES:
@@ -104,11 +112,15 @@ class BlockArgument:
 
 
 class VariableBlockArgument:
-    def __init__(self):
-        pass
+    def __init__(self, _class=None):
+        if _class is not None:
+            assert isinstance(_class, VariableClass)
+            self.variable_class = _class.value
+        else:
+            self.variable_class = VariableClass.SINGLE.value
 
     def serialize(self):
-        return {"type": "variable"}
+        return {"type": "variable", "class": self.variable_class}
 
 
 class DynamicBlockArgument:
