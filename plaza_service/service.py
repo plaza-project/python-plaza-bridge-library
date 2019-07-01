@@ -12,8 +12,18 @@ SLEEP_BETWEEN_RETRIES = 5
 
 
 class ExtraData:
-    def __init__(self, user_id):
+    def __init__(self, user_id, extra_data_dict=None):
         self.user_id = user_id
+        if extra_data_dict is None:
+            self.extra_data_dict = {}
+        else:
+            self.extra_data_dict = extra_data_dict
+
+        self._last_monitor_value = self.extra_data_dict.get("last_monitor_value", None)
+        if self._last_monitor_value is None:
+            self.last_monitor_value = None
+        else:
+            self.last_monitor_value = self._last_monitor_value.get("value", None)
 
 
 class AnswerHandler:
@@ -61,7 +71,7 @@ class PlazaService:
             parsed["type"],
             parsed["value"],
             parsed["message_id"],
-            ExtraData(parsed.get("user_id")),
+            ExtraData(parsed.get("user_id"), parsed.get("extra_data", None)),
         )
 
     async def __interact(self, websocket):
