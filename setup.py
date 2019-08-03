@@ -1,13 +1,13 @@
 from setuptools import setup
 
-setup(name='plaza_service',
-      version='0.0.1post1',
-      description='Helper to build plaza services.',
+setup(name='plaza_bridge',
+      version='0.0.2dev1',
+      description='Helper to build plaza bridges.',
       author='kenkeiras',
       author_email='kenkeiras@codigoparallevar.com',
       url='https://gitlab.com/plaza-project/bridges/python-plaza-lib',
       license='Apache License 2.0',
-      packages=['plaza_service'],
+      packages=['plaza_bridge'],
       scripts=[],
       classifiers=[
           "Programming Language :: Python :: 3",

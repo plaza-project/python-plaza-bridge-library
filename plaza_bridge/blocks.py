@@ -123,7 +123,7 @@ class VariableBlockArgument:
         return {"type": "variable", "class": self.variable_class}
 
 
-class DynamicBlockArgument:
+class CallbackBlockArgument:
     def __init__(self, type, callback):
         if type not in ALLOWED_ARGUMENT_TYPES:
             raise TypeError("Type “{}” not allowed".format(type))

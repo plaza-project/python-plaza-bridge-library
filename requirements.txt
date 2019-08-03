@@ -1,2 +1,2 @@
 # Websocket connection
-websockets
+websocket_client
