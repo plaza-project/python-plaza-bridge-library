@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='plaza_service',
-      version='0.0.1a1',
+      version='0.0.1post1',
       description='Helper to build plaza services.',
       author='kenkeiras',
       author_email='kenkeiras@codigoparallevar.com',
