@@ -3,6 +3,8 @@ import logging
 import json
 import copy
 import collections
+import threading
+import traceback
 
 from .blocks import ServiceBlock, BlockType, CallbackBlockArgument
 from . import protocol
@@ -21,7 +23,8 @@ class PlazaBridge:
 
         self.blocks = {}
         self.callbacks = {}
-        self.callback_names = set()
+        self.callbacks_by_name = {}
+
 
     ## Decorators
     def getter(self,
@@ -62,11 +65,10 @@ class PlazaBridge:
             if name is None:
                 name = func.__name__
 
-            if name in self.callback_names:
+            if name in self.callbacks_by_name:
                 raise Exception('Callback with name "{}" already registered'.format(name))
 
-            self.callback_names.add(name)
-
+            self.callbacks_by_name[name] = func
             self.callbacks[func] = (name, func)
 
             return func
@@ -182,12 +184,12 @@ class PlazaBridge:
                 )
             except:
                 logging.error(traceback.format_exc())
-                websocket.send(
+                self.websocket.send(
                     json.dumps({"message_id": message_id, "success": False})
                 )
                 return
     
-            websocket.send(
+            self.websocket.send(
                 json.dumps(
                     {
                         "message_id": message_id,
@@ -199,28 +201,28 @@ class PlazaBridge:
         self._run_parallel(_handling)
 
     def _handle_get_service_registration(self, value, message_id, extra_data):
-            if self._registerer is None:
-                websocket.send(
+            if self.registerer is None:
+                self.websocket.send(
                     json.dumps(
                         {"message_id": message_id, "success": True, "result": None}
                     )
                 )
             else:
                 def _handling():
-                    websocket.send(
+                    self.websocket.send(
                         json.dumps(
                             {
                                 "message_id": message_id,
                                 "success": True,
-                                "result": self._registerer.serialize(extra_data),
+                                "result": self.registerer.serialize(extra_data),
                             }
                         )
                     )
                 self._run_parallel(_handling)
 
     def _handle_registration(self, value, message_id, extra_data):
-        if self._registerer is None:
-            websocket.send(
+        if self.registerer is None:
+            self.websocket.send(
                 json.dumps(
                     {
                         "message_id": message_id,
@@ -231,12 +233,20 @@ class PlazaBridge:
             )
         else:
             def _handling():
-                result = self._registerer.register(value, extra_data)
+                try:
+                    result = self.registerer.register(value, extra_data)
+                except:
+                    logging.error(traceback.format_exc())
+                    self.websocket.send(
+                        json.dumps({"message_id": message_id, "success": False})
+                    )
+                    return
+
                 message = None
                 if result != True:
                     result, message = result
     
-                websocket.send(
+                self.websocket.send(
                     json.dumps(
                         {
                             "message_id": message_id,
@@ -248,8 +258,8 @@ class PlazaBridge:
             self._run_parallel(_handling)
 
     def _handle_oauth_return(self, value, message_id, extra_data):
-        if self._registerer is None:
-            websocket.send(
+        if self.registerer is None:
+            self.websocket.send(
                 json.dumps(
                     {
                         "message_id": message_id,
@@ -260,12 +270,12 @@ class PlazaBridge:
             )
         else:
             def _handling():
-                result = self._registerer.register(value, extra_data)
+                result = self.registerer.register(value, extra_data)
                 message = None
                 if result != True:
                     result, message = result
     
-                websocket.send(
+                self.websocket.send(
                     json.dumps(
                         {
                             "message_id": message_id,
@@ -280,17 +290,15 @@ class PlazaBridge:
     def _handle_data_callback(self, value, message_id, extra_data):
         def _handling():
             try:
-                response = self.handle_data_callback(
-                    value["callback"], extra_data
-                )
+                response = self.callbacks_by_name[value["callback"]](extra_data)
             except:
                 logging.warn(traceback.format_exc())
-                websocket.send(
+                self.websocket.send(
                     json.dumps({"message_id": message_id, "success": False})
                 )
                 return
 
-            websocket.send(
+            self.websocket.send(
                 json.dumps(
                     {"message_id": message_id, "success": True, "result": response}
                 )
@@ -325,5 +333,5 @@ class PlazaBridge:
             ExtraData(parsed.get("user_id"), parsed.get("extra_data", None)),
         )
 
-    def _run_parallel(func):
-        threading.Thread(target=func).star()
+    def _run_parallel(self, func):
+        threading.Thread(target=func).start()
