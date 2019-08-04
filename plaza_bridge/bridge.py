@@ -14,6 +14,8 @@ from .extra_data import ExtraData
 
 BlockEntry = collections.namedtuple('BlockEntry', ['block', 'function'])
 
+PING_INTERVAL = 30 # Ping every 30 seconds, usually disconnections are at 60s
+
 class PlazaBridge:
     def __init__(self, name, endpoint=None, registerer=None, is_public=False):
         self.name = name
@@ -137,20 +139,20 @@ class PlazaBridge:
     def _on_close(self, ws):
         assert(ws is self.websocket)
         logging.debug('Connection closed on {}'.format(ws))
-        
+
     def _run_loop(self):
         def _on_message(ws, msg): return self._on_message(ws, msg)
         def _on_error(ws, error): return self._on_error(ws, error)
         def _on_open(ws): return self._on_open(ws)
         def _on_close(ws): return self._on_close(ws)
-        
+
         logging.debug('Connecting to {}'.format(self.endpoint))
         self.websocket = websocket.WebSocketApp(self.endpoint,
                                                 on_message=_on_message,
                                                 on_error=_on_error,
                                                 on_open=_on_open,
                                                 on_close=_on_close)
-        self.websocket.run_forever()        
+        self.websocket.run_forever(ping_interval=PING_INTERVAL)
 
     ## Message handling
     def _handle_message(self, message):
