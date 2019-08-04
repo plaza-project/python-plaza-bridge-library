@@ -35,8 +35,8 @@ class PlazaBridge:
                block_result_type=None,
                id=None,
     ):
-        arguments = self._resolve_arguments(arguments)               
-        
+        arguments = self._resolve_arguments(arguments)
+
         def _decorator_getter(func):
             nonlocal id
 
@@ -88,7 +88,7 @@ class PlazaBridge:
                   save_to=None,
                   id=None,
     ):
-        arguments = self._resolve_arguments(arguments)               
+        arguments = self._resolve_arguments(arguments)
 
         def _decorator_operation(func):
             nonlocal id
@@ -190,7 +190,7 @@ class PlazaBridge:
                     json.dumps({"message_id": message_id, "success": False})
                 )
                 return
-    
+
             self.websocket.send(
                 json.dumps(
                     {
@@ -247,7 +247,7 @@ class PlazaBridge:
                 message = None
                 if result != True:
                     result, message = result
-    
+
                 self.websocket.send(
                     json.dumps(
                         {
@@ -276,7 +276,7 @@ class PlazaBridge:
                 message = None
                 if result != True:
                     result, message = result
-    
+
                 self.websocket.send(
                     json.dumps(
                         {
@@ -311,7 +311,7 @@ class PlazaBridge:
     ## Auxiliary
     def get_configuration(self):
         blocks = [block.block for block in self.blocks.values()]
-      
+
         return ServiceConfiguration(service_name=self.name,
                                     is_public=self.is_public,
                                     registration=self.registerer,
