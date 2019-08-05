@@ -18,6 +18,6 @@ setup(name='plaza_bridge',
       ],
       include_package_data=True,
       install_requires = [
-          'websockets'
+          'websocket_client'
       ],
       zip_safe=False)
