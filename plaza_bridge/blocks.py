@@ -94,9 +94,17 @@ ALLOWED_ARGUMENT_TYPES = {
 }
 
 
-class VariableClass(enum.Enum):
-    SINGLE = "single"  # Like atoms in lisp
-    LIST = "list"
+SINGLE_VARIABLE_CLASS = "single"
+LIST_VARIABLE_CLASS = "list"
+
+ALLOWED_VARIABLE_CLASSES = {
+    list: LIST_VARIABLE_CLASS,
+    str: SINGLE_VARIABLE_CLASS,
+    int: SINGLE_VARIABLE_CLASS,
+    float: SINGLE_VARIABLE_CLASS,
+    bool: SINGLE_VARIABLE_CLASS,
+    None: SINGLE_VARIABLE_CLASS,
+}
 
 
 class BlockArgument:
@@ -113,15 +121,9 @@ class BlockArgument:
 
 class VariableBlockArgument:
     def __init__(self, _class=None):
-        if _class is None:
-            self.variable_class = VariableClass.SINGLE.value
-        elif isinstance(_class, VariableClass):
-                self.variable_class = _class.value
-        else:
-            if _class is str or _class is int or _class is float or _class is bool:
-                self.variable_class = VariableClass.SINGLE.value
-            elif _class is list:
-                self.variable_class = VariableClass.LIST.value
+        if _class not in ALLOWED_VARIABLE_CLASSES:
+            raise TypeError("Variable class “{}” not allowed".format(_class))
+        self.variable_class = ALLOWED_VARIABLE_CLASSES[_class]
 
     def serialize(self):
         return {"type": "variable", "class": self.variable_class}
