@@ -112,14 +112,11 @@ class PlazaBridge:
         self.events = EventManager(self, events)
 
     ## Decorators
-    def getter(self, message, arguments=[], block_result_type=None, id=None):
+    def getter(self, id, message, arguments=[], block_result_type=None):
         arguments = self._resolve_arguments(arguments)
 
         def _decorator_getter(func):
             nonlocal id
-
-            if id is None:
-                id = func.__name__
 
             if id in self.blocks:
                 raise Exception('A block with id "{}" already exists'.format(id))
@@ -167,14 +164,11 @@ class PlazaBridge:
             name = param
             return _decorator_callback
 
-    def operation(self, message, arguments=[], save_to=None, id=None):
+    def operation(self, id, message, arguments=[], save_to=None):
         arguments = self._resolve_arguments(arguments)
 
         def _decorator_operation(func):
             nonlocal id
-
-            if id is None:
-                id = func.__name__
 
             if id in self.blocks:
                 raise Exception('A block with id "{}" already exists'.format(id))
