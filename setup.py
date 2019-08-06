@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='plaza_bridge',
-      version='0.0.2dev1',
+      version='0.0.2dev2',
       description='Helper to build plaza bridges.',
       author='kenkeiras',
       author_email='kenkeiras@codigoparallevar.com',

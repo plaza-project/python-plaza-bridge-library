@@ -128,7 +128,7 @@ class PlazaBridge:
                 block=ServiceBlock(
                     id=id,
                     function_name=id,
-                    message="G " + message,
+                    message=message,
                     block_type=BlockType.GETTER,
                     block_result_type=utils.serialize_type(block_result_type),
                     arguments=arguments,
@@ -183,7 +183,7 @@ class PlazaBridge:
                 block=ServiceBlock(
                     id=id,
                     function_name=id,
-                    message="O " + message,
+                    message=message,
                     block_type=BlockType.OPERATION,
                     block_result_type=None,
                     arguments=arguments,
