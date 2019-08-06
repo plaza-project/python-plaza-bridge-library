@@ -88,8 +88,10 @@ def parse_text(text, replacements={}):
 
 class MessageBasedServiceRegistration:
     def __init__(self, **kwargs):
-        if 'service' in kwargs:
-            logging.warn("Service argument is deprecated on MessageBasedServiceRegistration")
+        if "service" in kwargs:
+            logging.warn(
+                "Service argument is deprecated on MessageBasedServiceRegistration"
+            )
 
     def get_call_to_action_text(self):
         raise NotImplementedError("This should be implemented by inheriting classes")
@@ -112,8 +114,10 @@ class MessageBasedServiceRegistration:
 
 class FormBasedServiceRegistration:
     def __init__(self, **kwargs):
-        if 'service' in kwargs:
-            logging.warn("Service argument is deprecated on FormBasedServiceRegistration")
+        if "service" in kwargs:
+            logging.warn(
+                "Service argument is deprecated on FormBasedServiceRegistration"
+            )
 
     def get_call_to_action_text(self):
         raise NotImplementedError("This should be implemented by inheriting classes")

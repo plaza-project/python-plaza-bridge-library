@@ -1,5 +1,3 @@
-
-
 class ExtraData:
     def __init__(self, user_id, extra_data_dict=None):
         self.user_id = user_id
