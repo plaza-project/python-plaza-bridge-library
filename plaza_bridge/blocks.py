@@ -113,11 +113,15 @@ class BlockArgument:
 
 class VariableBlockArgument:
     def __init__(self, _class=None):
-        if _class is not None:
-            assert isinstance(_class, VariableClass)
-            self.variable_class = _class.value
-        else:
+        if _class is None:
             self.variable_class = VariableClass.SINGLE.value
+        elif isinstance(_class, VariableClass):
+                self.variable_class = _class.value
+        else:
+            if _class is str or _class is int or _class is float or _class is bool:
+                self.variable_class = VariableClass.SINGLE.value
+            elif _class is list:
+                self.variable_class = VariableClass.LIST.value
 
     def serialize(self):
         return {"type": "variable", "class": self.variable_class}
