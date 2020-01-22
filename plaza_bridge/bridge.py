@@ -34,7 +34,12 @@ class Event:
         self._name = name
 
     def add_trigger_block(
-        self, message, arguments=[], save_to=None, id=None, expected_value=None
+            self, message,
+            arguments=[],
+            save_to=None,
+            id=None,
+            expected_value=None,
+            subkey=None
     ):
         if id is None:
             id = self._name + "_" + message_to_id(message)
@@ -47,6 +52,7 @@ class Event:
             save_to=save_to,
             expected_value=expected_value,
             key=self._name,
+            subkey=subkey,
         )
         self._manager._add_trigger_block(block)
 
