@@ -323,7 +323,7 @@ class PlazaBridge:
         elif message_id in self._sent_messages:
             del self._sent_messages[message_id]  # @TODO Use the result
 
-        elif msg_type == protocol.ADVICE:
+        elif msg_type == protocol.ADVICE_NOTIFICATION:
             self._handle_advice(value, message_id, extra_data)
 
         else:
@@ -458,7 +458,7 @@ class PlazaBridge:
                 self._handle_signal_listeners_update(value[advice],
                                                      message_id, extra_data)
             else:
-                logging.info("Received unhandled ADVICE (this will not be a problem).")
+                logging.info("Received unhandled ADVICE_NOTIFICATION (this will not be a problem).")
 
     def _handle_signal_listeners_update(self, update, message_id, extra_data):
         logging.info("Update: {}".format(update))
