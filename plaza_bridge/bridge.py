@@ -1,14 +1,19 @@
+import uuid
 import websocket
 import logging
 import json
-import copy
 import collections
 import threading
 import traceback
 import string
 import re
 
-from .blocks import ServiceBlock, ServiceTriggerBlock, BlockType, CallbackBlockArgument
+from .blocks import (
+    ServiceBlock,
+    ServiceTriggerBlock,
+    BlockType,
+    CallbackBlockArgument
+)
 from . import protocol
 from .service_configuration import ServiceConfiguration
 from . import utils
@@ -32,9 +37,15 @@ class Event:
     def __init__(self, manager, name):
         self._manager = manager
         self._name = name
+        self._on_new_listeners = None
 
     def add_trigger_block(
-        self, message, arguments=[], save_to=None, id=None, expected_value=None
+            self, message,
+            arguments=[],
+            save_to=None,
+            id=None,
+            expected_value=None,
+            subkey=None
     ):
         if id is None:
             id = self._name + "_" + message_to_id(message)
@@ -47,8 +58,21 @@ class Event:
             save_to=save_to,
             expected_value=expected_value,
             key=self._name,
+            subkey=subkey,
         )
         self._manager._add_trigger_block(block)
+
+    def on_new_listeners(self, func):
+        if self._on_new_listeners is not None:
+            raise Exception('"on_new_listeners" registry already defined: "{}"'
+                            .format(self._on_new_listeners))
+
+        self._on_new_listeners = func
+        return func
+
+    def trigger_on_new_listeners(self, user_id, subkey):
+        func = self._on_new_listeners
+        return func(user_id, subkey)
 
     def send(self, content, event=None, to_user=None):
         if event is None:
@@ -105,6 +129,7 @@ class PlazaBridge:
         self.endpoint = endpoint
         self.registerer = registerer
         self.is_public = is_public
+        self._sent_messages = {}
 
         self.blocks = {}
         self.callbacks = {}
@@ -218,6 +243,32 @@ class PlazaBridge:
                 }
             )
         )
+        self._send_advice()
+
+    def _send_advice(self):
+        self._send_notify_listeners_advice()
+
+    def _send_notify_listeners_advice(self):
+        listen_notify_channels = []
+        for _event_id, event in self.events._events.items():
+            if event._on_new_listeners is not None:  # Listening event set
+                listen_notify_channels.append(event._name)
+
+        if len(listen_notify_channels) > 0:
+            mid = str(uuid.uuid4())
+            self.websocket.send(
+                json.dumps(
+                    {
+                        "type": protocol.ADVICE,
+                        "message_id": mid,
+                        "value": {
+                            "NOTIFY_SIGNAL_LISTENERS": listen_notify_channels
+                        }
+                    }
+                )
+            )
+            self._sent_messages[mid] = (("ADVICE", "NOTIFY_SIGNAL_LISTENERS"),
+                                        listen_notify_channels)
 
     def _on_error(self, ws, error):
         assert ws is self.websocket
@@ -268,6 +319,12 @@ class PlazaBridge:
 
         elif msg_type == protocol.DATA_CALLBACK:
             self._handle_data_callback(value, message_id, extra_data)
+
+        elif message_id in self._sent_messages:
+            del self._sent_messages[message_id]  # @TODO Use the result
+
+        elif msg_type == protocol.ADVICE_NOTIFICATION:
+            self._handle_advice(value, message_id, extra_data)
 
         else:
             raise Exception("Unknown message type “{}”".format(msg_type))
@@ -395,6 +452,36 @@ class PlazaBridge:
 
         self._run_parallel(_handling)
 
+    def _handle_advice(self, value, message_id, extra_data):
+        for advice in value:
+            if advice == "SIGNAL_LISTENERS":
+                self._handle_signal_listeners_update(value[advice],
+                                                     message_id, extra_data)
+            else:
+                logging.info("Received unhandled ADVICE_NOTIFICATION (this will not be a problem).")
+
+    def _handle_signal_listeners_update(self, update, message_id, extra_data):
+        logging.info("Update: {}".format(update))
+        for user, listeners in update.items():
+            for event_ref in listeners:
+                matching_events = self._find_matching_events(event_ref)
+                for event in matching_events:
+                    if event._on_new_listeners is not None:
+                        event.trigger_on_new_listeners(user, event_ref.get('subkey', None))
+
+    def _find_matching_events(self, event_ref):
+        results = []
+        for event in self.events._events.values():
+            if self._is_match_event_ref(event, event_ref):
+                results.append(event)
+        return results
+
+    def _is_match_event_ref(self, event, event_ref):
+        if event_ref == '__all__':
+            return True
+
+        return event_ref.get('key', None) == event._name
+
     ## Auxiliary
     def _send_raw(self, data):
         self.websocket.send(data)
@@ -421,9 +508,9 @@ class PlazaBridge:
     def _parse(self, message):
         parsed = json.loads(message)
         return (
-            parsed["type"],
-            parsed["value"],
-            parsed["message_id"],
+            parsed.get("type"),
+            parsed.get("value"),
+            parsed.get("message_id"),
             ExtraData(parsed.get("user_id"), parsed.get("extra_data", None)),
         )
 

@@ -61,6 +61,7 @@ class ServiceTriggerBlock:
         save_to=None,
         expected_value=None,
         key=None,
+        subkey=None,
     ):
         self.id = id
         self.function_name = function_name
@@ -72,6 +73,7 @@ class ServiceTriggerBlock:
             self.key = key
         else:
             self.key = function_name
+        self.subkey = subkey
 
     def serialize(self):
         return {
@@ -83,6 +85,7 @@ class ServiceTriggerBlock:
             "expected_value": self.expected_value,
             "block_type": BlockType.TRIGGER.value,
             "key": self.key,
+            "subkey": self.subkey,
         }
 
 
