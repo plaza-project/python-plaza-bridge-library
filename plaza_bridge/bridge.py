@@ -130,11 +130,13 @@ class PlazaBridge:
         self.registerer = registerer
         self.is_public = is_public
         self._sent_messages = {}
+        self._ready_triggered = False
 
         self.blocks = {}
         self.callbacks = {}
         self.callbacks_by_name = {}
         self.events = EventManager(self, events)
+        self.on_ready = None
 
     ## Decorators
     def getter(self, id, message, arguments=[], block_result_type=None):
@@ -244,6 +246,10 @@ class PlazaBridge:
             )
         )
         self._send_advice()
+        if self.on_ready is not None and not self._ready_triggered:
+            logging.debug("Triggering on_ready: {}".format(self.on_ready))
+            self.on_ready()
+        self._ready_triggered = True
 
     def _send_advice(self):
         self._send_notify_listeners_advice()
@@ -272,11 +278,11 @@ class PlazaBridge:
 
     def _on_error(self, ws, error):
         assert ws is self.websocket
-        logging.debug("Error on {}: {}".format(ws, error))
+        logging.error("Error on {}: {}".format(ws, error))
 
     def _on_close(self, ws):
         assert ws is self.websocket
-        logging.debug("Connection closed on {}".format(ws))
+        logging.warn("Connection closed on {}".format(ws))
 
     def _run_loop(self):
         def _on_message(ws, msg):
