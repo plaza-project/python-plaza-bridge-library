@@ -7,6 +7,7 @@ import threading
 import traceback
 import string
 import re
+import base64
 
 from .blocks import (
     ServiceBlock,
@@ -123,12 +124,15 @@ class EventManager:
 
 class PlazaBridge:
     def __init__(
-        self, name, endpoint=None, registerer=None, is_public=False, events=[]
+            self, name, endpoint=None, registerer=None, is_public=False, events=[],
+            icon=None, allow_multiple_connections=False,
     ):
         self.name = name
         self.endpoint = endpoint
         self.registerer = registerer
         self.is_public = is_public
+        self.icon = icon
+        self.allow_multiple_connections = allow_multiple_connections
         self._sent_messages = {}
         self._ready_triggered = False
 
@@ -228,6 +232,16 @@ class PlazaBridge:
 
         self._run_loop()
 
+    def establish_connection(self, connection_id, name=None):
+            self._send_raw(json.dumps({
+                "type": protocol.ESTABLISH_CONNECTION,
+                "value": {
+                    "connection_id": connection_id,
+                    "name": name,
+                }
+            }))
+
+    ## Internal callbacks
     def _on_message(self, ws, message):
         assert ws is self.websocket
         logging.debug("Message on {}: {}".format(ws, message))
@@ -332,6 +346,9 @@ class PlazaBridge:
         elif msg_type == protocol.ADVICE_NOTIFICATION:
             self._handle_advice(value, message_id, extra_data)
 
+        elif msg_type == protocol.ICON_REQUEST:
+            self._handle_icon_request(value, message_id, extra_data)
+
         else:
             raise Exception("Unknown message type “{}”".format(msg_type))
 
@@ -377,12 +394,12 @@ class PlazaBridge:
 
     def _handle_registration(self, value, message_id, extra_data):
         if self.registerer is None:
+            # If no registration is needed, connection is always established
             self._send_raw(
                 json.dumps(
                     {
                         "message_id": message_id,
-                        "success": False,
-                        "error": "No registerer available",
+                        "success": True,
                     }
                 )
             )
@@ -398,16 +415,21 @@ class PlazaBridge:
                     )
                     return
 
-                message = None
+                data = {}
                 if result != True:
-                    result, message = result
+                    result, data = result
+
+                if not isinstance(data, dict) or not 'name' in data:
+                    logging.warning("Note it's preferrable to set the return value of a register() call to"
+                                    " (True, {'name': <connection_name>})."
+                                    " This is *required* for multiple connections on a single user.")
 
                 self._send_raw(
                     json.dumps(
                         {
                             "message_id": message_id,
                             "success": result,
-                            "message": message,
+                            "data": data,
                         }
                     )
                 )
@@ -466,6 +488,19 @@ class PlazaBridge:
             else:
                 logging.info("Received unhandled ADVICE_NOTIFICATION (this will not be a problem).")
 
+    def _handle_icon_request(self, _value, _message_id, _extra_data):
+        if not self.icon or not 'read' in dir(self.icon):
+            logging.error('Requested icon. Cannot be read')
+            return
+
+        data = base64.b64encode(self.icon.read()).decode('utf-8')
+        self._send_raw(
+            json.dumps(
+                {"type": protocol.ICON_UPLOAD, "value": {"content": data}}
+            )
+        )
+
+
     def _handle_signal_listeners_update(self, update, message_id, extra_data):
         logging.info("Update: {}".format(update))
         for user, listeners in update.items():
@@ -500,6 +535,8 @@ class PlazaBridge:
             is_public=self.is_public,
             registration=self.registerer,
             blocks=blocks,
+            icon=self.icon,
+            allow_multiple_connections=self.allow_multiple_connections,
         )
 
     def _resolve_arguments(self, arguments):
