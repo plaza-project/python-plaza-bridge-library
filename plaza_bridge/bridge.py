@@ -75,7 +75,7 @@ class Event:
         func = self._on_new_listeners
         return func(user_id, subkey)
 
-    def send(self, content, event=None, to_user=None):
+    def send(self, content, event=None, to_user=None, subkey=None):
         if event is None:
             event = content
 
@@ -84,6 +84,7 @@ class Event:
                 {
                     "type": protocol.NOTIFICATION,
                     "key": self._name,
+                    "subkey": subkey,
                     "to_user": to_user,
                     "value": event,
                     "content": content,
