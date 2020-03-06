@@ -450,16 +450,21 @@ class PlazaBridge:
         else:
 
             def _handling():
-                result = self.registerer.register(value, extra_data)
+                try:
+                    result = self.registerer.register(value, extra_data)
+                except:
+                    logging.error(traceback.format_exc())
+                    result = False
+
                 message = None
-                if result != True:
+                if result not in (True, False):
                     result, message = result
 
-            self._send_raw(
-                json.dumps(
-                    {"message_id": message_id, "success": result, "message": message}
+                self._send_raw(
+                    json.dumps(
+                        {"message_id": message_id, "success": result, "message": message}
+                    )
                 )
-            )
 
             self._run_parallel(_handling)
 
