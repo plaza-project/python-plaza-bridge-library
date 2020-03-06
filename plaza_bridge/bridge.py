@@ -513,7 +513,10 @@ class PlazaBridge:
                 matching_events = self._find_matching_events(event_ref)
                 for event in matching_events:
                     if event._on_new_listeners is not None:
-                        event.trigger_on_new_listeners(user, event_ref.get('subkey', None))
+                        if isinstance(event_ref, dict):
+                            event.trigger_on_new_listeners(user, event_ref.get('subkey', None))
+                        else:
+                            event.trigger_on_new_listeners(user, event_ref)
 
     def _find_matching_events(self, event_ref):
         results = []
