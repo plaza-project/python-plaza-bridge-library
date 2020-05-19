@@ -246,7 +246,10 @@ class PlazaBridge:
     def _on_message(self, ws, message):
         assert ws is self.websocket
         logging.debug("Message on {}: {}".format(ws, message))
-        self._handle_message(message)
+        try:
+            self._handle_message(message)
+        except:
+            logging.error("Error message [{}]: {}".format(message, traceback.format_exc()))
 
     def _on_open(self, ws):
         assert ws is self.websocket
