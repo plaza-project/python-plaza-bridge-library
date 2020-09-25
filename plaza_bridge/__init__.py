@@ -1,8 +1,5 @@
+from .blocks import (BlockArgument, BlockContext, CallbackBlockArgument,
+                     CollectionBlockArgument, VariableBlockArgument)
 from .bridge import PlazaBridge
-from .registration import MessageBasedServiceRegistration, FormBasedServiceRegistration
-from .blocks import (
-    BlockArgument,
-    CallbackBlockArgument,
-    VariableBlockArgument,
-    BlockContext,
-)
+from .registration import (FormBasedServiceRegistration,
+                           MessageBasedServiceRegistration)

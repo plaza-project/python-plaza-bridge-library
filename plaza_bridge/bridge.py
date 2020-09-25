@@ -1,36 +1,34 @@
-import uuid
-import websocket
-import logging
-import json
+import base64
 import collections
+import json
+import logging
+import os
+import re
+import string
 import threading
 import traceback
-import string
-import re
-import base64
+import uuid
 
-from .blocks import (
-    ServiceBlock,
-    ServiceTriggerBlock,
-    BlockType,
-    CallbackBlockArgument
-)
-from . import protocol
-from .service_configuration import ServiceConfiguration
-from . import utils
+import websocket
+
+from . import protocol, utils
+from .blocks import (BlockType, CallbackBlockArgument, ServiceBlock,
+                     ServiceTriggerBlock)
 from .extra_data import ExtraData
+from .service_configuration import ServiceConfiguration
 
 BlockEntry = collections.namedtuple("BlockEntry", ["block", "function"])
 
 PING_INTERVAL = 30  # Ping every 30 seconds, usually disconnections are at 60s
 ALLOWED_EVENT_CHARS = string.ascii_lowercase + "_"
+ALLOWED_COLLECTION_CHARS = ALLOWED_EVENT_CHARS
 DEDUPLICATE_UNDERSCORE_RE = re.compile("__+")
 
 
 def message_to_id(message):
-    sanitized = "".join(
-        [chr if chr in ALLOWED_EVENT_CHARS else "_" for chr in message.lower()]
-    )
+    sanitized = "".join([
+        chr if chr in ALLOWED_EVENT_CHARS else "_" for chr in message.lower()
+    ])
     return DEDUPLICATE_UNDERSCORE_RE.sub("_", sanitized).strip("_")
 
 
@@ -123,10 +121,69 @@ class EventManager:
         self._bridge._send_raw(data)
 
 
+class ManagedCollection:
+    def __init__(self, manager, name):
+        self.manager = manager
+        self.name = name
+        self.callback = None
+
+    def getter(self, param=None):
+        def _decorator_callback(func):
+            if self.callback is not None:
+                raise Exception(
+                    '{} collection\'s callback already registered'.format(
+                        self.name))
+
+            self.callback = func
+            self.manager._bridge._add_callback_with_name(
+                self.name, self._callback)
+            return func
+
+        # If "param" is a function, the decorator was called with no `()`
+        if callable(param):
+            return _decorator_callback(param)
+        else:
+            return _decorator_callback
+
+    def _callback(self, extra_data):
+        return self.callback(extra_data.user_id, extra_data)
+
+
+class CollectionManager:
+    def __init__(self, bridge, collections):
+        if any([
+                name.startswith("_")
+                or not all([char in ALLOWED_EVENT_CHARS for char in name])
+                for name in collections
+        ]):
+            raise Exception("Names can only contain characters '{}'".format(
+                ALLOWED_COLLECTION_CHARS))
+
+        self._bridge = bridge
+        self._collections = {
+            collection: ManagedCollection(self, collection)
+            for collection in collections
+        }
+
+    def __getattr__(self, collection_name):
+        if collection_name not in self._collections:
+            raise AttributeError(
+                'No collection named "{}"'.format(collection_name))
+
+        return self._collections[collection_name]
+
+
 class PlazaBridge:
     def __init__(
-            self, name, endpoint=None, registerer=None, is_public=False, events=[],
-            icon=None, allow_multiple_connections=False,
+        self,
+        name,
+        endpoint=None,
+        registerer=None,
+        is_public=False,
+        events=[],
+        collections=[],
+        icon=None,
+        allow_multiple_connections=False,
     ):
         self.name = name
         self.endpoint = endpoint
@@ -141,6 +198,7 @@ class PlazaBridge:
         self.callbacks = {}
         self.callbacks_by_name = {}
         self.events = EventManager(self, events)
+        self.collections = CollectionManager(self, collections)
         self.on_ready = None
 
     ## Decorators
@@ -179,13 +237,7 @@ class PlazaBridge:
             if name is None:
                 name = func.__name__
 
-            if name in self.callbacks_by_name:
-                raise Exception(
-                    'Callback with name "{}" already registered'.format(name)
-                )
-
-            self.callbacks_by_name[name] = func
-            self.callbacks[func] = (name, func)
+            self._add_callback_with_name(name, func)
 
             return func
 
@@ -225,6 +277,14 @@ class PlazaBridge:
     ## External block additions
     def _add_trigger_block(self, block):
         self.blocks[block.id] = BlockEntry(block, None)
+
+    def _add_callback_with_name(self, name, func):
+        if name in self.callbacks_by_name:
+            raise Exception(
+                'Callback with name "{}" already registered'.format(name))
+
+        self.callbacks_by_name[name] = func
+        self.callbacks[func] = (name, func)
 
     ## Operation
     def run(self):
@@ -549,6 +609,7 @@ class PlazaBridge:
             blocks=blocks,
             icon=self.icon,
             allow_multiple_connections=self.allow_multiple_connections,
+            collection_manager=self.collections,
         )
 
     def _resolve_arguments(self, arguments):
