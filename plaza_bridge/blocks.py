@@ -155,7 +155,7 @@ class CollectionBlockArgument:
 
     def serialize(self):
         return {
-            "type": "str",
+            "type": "string",
             "values": {
                 "collection": self.collection.name
             },
