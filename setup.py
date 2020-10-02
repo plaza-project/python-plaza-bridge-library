@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='plaza_bridge',
-      version='0.0.2dev10',
+      version='0.0.2dev11',
       description='Helper to build plaza bridges.',
       author='kenkeiras',
       author_email='kenkeiras@codigoparallevar.com',
@@ -17,7 +17,7 @@ setup(name='plaza_bridge',
           "Intended Audience :: Developers",
       ],
       include_package_data=True,
-      install_requires = [
+      install_requires=[
           'websocket_client'
       ],
       zip_safe=False)
