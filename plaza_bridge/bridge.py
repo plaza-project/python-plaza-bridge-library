@@ -178,6 +178,7 @@ class PlazaBridge:
         self,
         name,
         endpoint=None,
+        token=None,
         registerer=None,
         is_public=False,
         events=[],
@@ -187,6 +188,7 @@ class PlazaBridge:
     ):
         self.name = name
         self.endpoint = endpoint
+        self.token = token
         self.registerer = registerer
         self.is_public = is_public
         self.icon = icon
@@ -314,6 +316,16 @@ class PlazaBridge:
     def _on_open(self, ws):
         assert ws is self.websocket
         logging.debug("Connection opened on {}".format(ws))
+
+        if self.token is not None:
+            ws.send(
+                json.dumps(
+                    {
+                        "type": protocol.AUTHENTICATION,
+                        "value": {"token": self.token}
+                    }
+                )
+            )
 
         ws.send(
             json.dumps(
