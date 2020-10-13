@@ -1,8 +1,12 @@
 from setuptools import setup
 
-setup(name='programaker_bridge',
-      version='0.0.3dev1',
-      description='Helper to build PrograMaker bridges.',
+import warnings
+
+warnings.warn("deprecated", DeprecationWarning)
+
+setup(name='plaza_bridge',
+      version='0.0.3dev2',
+      description='Helper to build PrograMaker bridges, superseeded by \'programaker-bridge\'.',
       author='kenkeiras',
       author_email='kenkeiras@codigoparallevar.com',
       url='https://gitlab.com/plaza-project/bridges/python-plaza-lib',
