@@ -173,7 +173,7 @@ class CollectionManager:
         return self._collections[collection_name]
 
 
-class PlazaBridge:
+class ProgramakerBridge:
     def __init__(
         self,
         name,
