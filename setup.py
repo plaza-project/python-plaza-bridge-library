@@ -1,13 +1,13 @@
 from setuptools import setup
 
 setup(name='programaker_bridge',
-      version='0.0.3dev1',
+      version='0.0.4dev1',
       description='Helper to build PrograMaker bridges.',
       author='kenkeiras',
       author_email='kenkeiras@codigoparallevar.com',
-      url='https://gitlab.com/plaza-project/bridges/python-plaza-lib',
+      url='https://gitlab.com/programaker-project/bridges/programaker-python-lib',
       license='Apache License 2.0',
-      packages=['plaza_bridge'],
+      packages=['programaker_bridge'],
       scripts=[],
       classifiers=[
           "Programming Language :: Python :: 3",
