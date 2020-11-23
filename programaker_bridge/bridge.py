@@ -7,6 +7,7 @@ import re
 import string
 import threading
 import traceback
+import urllib.parse
 import uuid
 
 import websocket
@@ -275,6 +276,30 @@ class ProgramakerBridge:
             return func
 
         return _decorator_operation
+
+    def get_oauth_return_url(self):
+        parsed = urllib.parse.urlparse(self.endpoint)
+
+        if parsed.scheme == "ws":
+            proto = "http"
+        elif parsed.scheme == "wss":
+            proto = "https"
+        else:
+            proto = parsed.scheme
+
+        if ":" in parsed.netloc:
+            host, port_num = parsed.netloc.split(":", 1)
+            port = ":" + port_num
+        else:
+            host = parsed.netloc
+            port = ""
+
+        bridge_id = parsed.path.rstrip("/").split("/")[-2]
+
+        return_uri = (
+            f"{proto}://{host}{port}/api/v0/bridges/by-id/{bridge_id}/oauth_return"
+        )
+        return return_uri
 
     ## External block additions
     def _add_trigger_block(self, block):
