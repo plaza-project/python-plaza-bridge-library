@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='programaker_bridge',
-      version='0.0.4dev1',
+      version='0.0.4dev2',
       description='Helper to build PrograMaker bridges.',
       author='kenkeiras',
       author_email='kenkeiras@codigoparallevar.com',
