@@ -2,14 +2,16 @@ from .utils import get_file_hash
 
 
 class ServiceConfiguration:
-    def __init__(self,
-                 service_name,
-                 blocks,
-                 registration=None,
-                 is_public=False,
-                 icon=None,
-                 allow_multiple_connections=False,
-                 collection_manager=None):
+    def __init__(
+        self,
+        service_name,
+        blocks,
+        registration=None,
+        is_public=False,
+        icon=None,
+        allow_multiple_connections=False,
+        collection_manager=None,
+    ):
         self.service_name = service_name
         self.blocks = blocks
         self.is_public = is_public
@@ -24,7 +26,7 @@ class ServiceConfiguration:
 
         collections = []
         for (_id, collection) in collection_manager._collections.items():
-            collections.append({'name': collection.name})
+            collections.append({"name": collection.name})
 
         return collections
 
@@ -34,7 +36,7 @@ class ServiceConfiguration:
             serialized_registration = self.registration.serialize()
 
         if isinstance(self.icon, str):
-            icon_data = {'url': self.icon}
+            icon_data = {"url": self.icon}
         elif self.icon is not None:
             hash_function, hash_result = get_file_hash(self.icon)
             icon_data = {hash_function: hash_result}

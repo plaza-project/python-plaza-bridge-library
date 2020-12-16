@@ -13,8 +13,7 @@ import uuid
 import websocket
 
 from . import protocol, utils
-from .blocks import (BlockType, CallbackBlockArgument, ServiceBlock,
-                     ServiceTriggerBlock)
+from .blocks import BlockType, CallbackBlockArgument, ServiceBlock, ServiceTriggerBlock
 from .extra_data import ExtraData
 from .service_configuration import ServiceConfiguration
 
@@ -27,9 +26,9 @@ DEDUPLICATE_UNDERSCORE_RE = re.compile("__+")
 
 
 def message_to_id(message):
-    sanitized = "".join([
-        chr if chr in ALLOWED_EVENT_CHARS else "_" for chr in message.lower()
-    ])
+    sanitized = "".join(
+        [chr if chr in ALLOWED_EVENT_CHARS else "_" for chr in message.lower()]
+    )
     return DEDUPLICATE_UNDERSCORE_RE.sub("_", sanitized).strip("_")
 
 
@@ -40,12 +39,13 @@ class Event:
         self._on_new_listeners = None
 
     def add_trigger_block(
-            self, message,
-            arguments=[],
-            save_to=None,
-            id=None,
-            expected_value=None,
-            subkey=None
+        self,
+        message,
+        arguments=[],
+        save_to=None,
+        id=None,
+        expected_value=None,
+        subkey=None,
     ):
         if id is None:
             id = self._name + "_" + message_to_id(message)
@@ -64,8 +64,11 @@ class Event:
 
     def on_new_listeners(self, func):
         if self._on_new_listeners is not None:
-            raise Exception('"on_new_listeners" registry already defined: "{}"'
-                            .format(self._on_new_listeners))
+            raise Exception(
+                '"on_new_listeners" registry already defined: "{}"'.format(
+                    self._on_new_listeners
+                )
+            )
 
         self._on_new_listeners = func
         return func
@@ -132,12 +135,11 @@ class ManagedCollection:
         def _decorator_callback(func):
             if self.callback is not None:
                 raise Exception(
-                    '{} collection\'s callback already registered'.format(
-                        self.name))
+                    "{} collection's callback already registered".format(self.name)
+                )
 
             self.callback = func
-            self.manager._bridge._add_callback_with_name(
-                self.name, self._callback)
+            self.manager._bridge._add_callback_with_name(self.name, self._callback)
             return func
 
         # If "param" is a function, the decorator was called with no `()`
@@ -152,13 +154,18 @@ class ManagedCollection:
 
 class CollectionManager:
     def __init__(self, bridge, collections):
-        if any([
+        if any(
+            [
                 name.startswith("_")
                 or not all([char in ALLOWED_EVENT_CHARS for char in name])
                 for name in collections
-        ]):
-            raise Exception("Names can only contain characters '{}'".format(
-                ALLOWED_COLLECTION_CHARS))
+            ]
+        ):
+            raise Exception(
+                "Names can only contain characters '{}'".format(
+                    ALLOWED_COLLECTION_CHARS
+                )
+            )
 
         self._bridge = bridge
         self._collections = {
@@ -168,8 +175,7 @@ class CollectionManager:
 
     def __getattr__(self, collection_name):
         if collection_name not in self._collections:
-            raise AttributeError(
-                'No collection named "{}"'.format(collection_name))
+            raise AttributeError('No collection named "{}"'.format(collection_name))
 
         return self._collections[collection_name]
 
@@ -307,8 +313,7 @@ class ProgramakerBridge:
 
     def _add_callback_with_name(self, name, func):
         if name in self.callbacks_by_name:
-            raise Exception(
-                'Callback with name "{}" already registered'.format(name))
+            raise Exception('Callback with name "{}" already registered'.format(name))
 
         self.callbacks_by_name[name] = func
         self.callbacks[func] = (name, func)
@@ -321,13 +326,17 @@ class ProgramakerBridge:
         self._run_loop()
 
     def establish_connection(self, connection_id, name=None):
-            self._send_raw(json.dumps({
-                "type": protocol.ESTABLISH_CONNECTION,
-                "value": {
-                    "connection_id": connection_id,
-                    "name": name,
+        self._send_raw(
+            json.dumps(
+                {
+                    "type": protocol.ESTABLISH_CONNECTION,
+                    "value": {
+                        "connection_id": connection_id,
+                        "name": name,
+                    },
                 }
-            }))
+            )
+        )
 
     ## Internal callbacks
     def _on_message(self, ws, message):
@@ -336,7 +345,9 @@ class ProgramakerBridge:
         try:
             self._handle_message(message)
         except:
-            logging.error("Error message [{}]: {}".format(message, traceback.format_exc()))
+            logging.error(
+                "Error message [{}]: {}".format(message, traceback.format_exc())
+            )
 
     def _on_open(self, ws):
         assert ws is self.websocket
@@ -345,10 +356,7 @@ class ProgramakerBridge:
         if self.token is not None:
             ws.send(
                 json.dumps(
-                    {
-                        "type": protocol.AUTHENTICATION,
-                        "value": {"token": self.token}
-                    }
+                    {"type": protocol.AUTHENTICATION, "value": {"token": self.token}}
                 )
             )
 
@@ -382,14 +390,14 @@ class ProgramakerBridge:
                     {
                         "type": protocol.ADVICE,
                         "message_id": mid,
-                        "value": {
-                            "NOTIFY_SIGNAL_LISTENERS": listen_notify_channels
-                        }
+                        "value": {"NOTIFY_SIGNAL_LISTENERS": listen_notify_channels},
                     }
                 )
             )
-            self._sent_messages[mid] = (("ADVICE", "NOTIFY_SIGNAL_LISTENERS"),
-                                        listen_notify_channels)
+            self._sent_messages[mid] = (
+                ("ADVICE", "NOTIFY_SIGNAL_LISTENERS"),
+                listen_notify_channels,
+            )
 
     def _on_error(self, ws, error):
         assert ws is self.websocket
@@ -520,10 +528,12 @@ class ProgramakerBridge:
                 if result != True:
                     result, data = result
 
-                if not isinstance(data, dict) or not 'name' in data:
-                    logging.warning("Note it's preferrable to set the return value of a register() call to"
-                                    " (True, {'name': <connection_name>})."
-                                    " This is *required* for multiple connections on a single user.")
+                if not isinstance(data, dict) or not "name" in data:
+                    logging.warning(
+                        "Note it's preferrable to set the return value of a register() call to"
+                        " (True, {'name': <connection_name>})."
+                        " This is *required* for multiple connections on a single user."
+                    )
 
                 self._send_raw(
                     json.dumps(
@@ -563,7 +573,11 @@ class ProgramakerBridge:
 
                 self._send_raw(
                     json.dumps(
-                        {"message_id": message_id, "success": result, "message": message}
+                        {
+                            "message_id": message_id,
+                            "success": result,
+                            "message": message,
+                        }
                     )
                 )
 
@@ -589,23 +603,23 @@ class ProgramakerBridge:
     def _handle_advice(self, value, message_id, extra_data):
         for advice in value:
             if advice == "SIGNAL_LISTENERS":
-                self._handle_signal_listeners_update(value[advice],
-                                                     message_id, extra_data)
+                self._handle_signal_listeners_update(
+                    value[advice], message_id, extra_data
+                )
             else:
-                logging.info("Received unhandled ADVICE_NOTIFICATION (this will not be a problem).")
+                logging.info(
+                    "Received unhandled ADVICE_NOTIFICATION (this will not be a problem)."
+                )
 
     def _handle_icon_request(self, _value, _message_id, _extra_data):
-        if not self.icon or not 'read' in dir(self.icon):
-            logging.error('Requested icon. Cannot be read')
+        if not self.icon or not "read" in dir(self.icon):
+            logging.error("Requested icon. Cannot be read")
             return
 
-        data = base64.b64encode(self.icon.read()).decode('utf-8')
+        data = base64.b64encode(self.icon.read()).decode("utf-8")
         self._send_raw(
-            json.dumps(
-                {"type": protocol.ICON_UPLOAD, "value": {"content": data}}
-            )
+            json.dumps({"type": protocol.ICON_UPLOAD, "value": {"content": data}})
         )
-
 
     def _handle_signal_listeners_update(self, update, message_id, extra_data):
         logging.info("Update: {}".format(update))
@@ -615,7 +629,9 @@ class ProgramakerBridge:
                 for event in matching_events:
                     if event._on_new_listeners is not None:
                         if isinstance(event_ref, dict):
-                            event.trigger_on_new_listeners(user, event_ref.get('subkey', None))
+                            event.trigger_on_new_listeners(
+                                user, event_ref.get("subkey", None)
+                            )
                         else:
                             event.trigger_on_new_listeners(user, event_ref)
 
@@ -627,10 +643,10 @@ class ProgramakerBridge:
         return results
 
     def _is_match_event_ref(self, event, event_ref):
-        if event_ref == '__all__':
+        if event_ref == "__all__":
             return True
 
-        return event_ref.get('key', None) == event._name
+        return event_ref.get("key", None) == event._name
 
     ## Auxiliary
     def _send_raw(self, data):

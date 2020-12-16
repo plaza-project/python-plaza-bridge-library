@@ -143,9 +143,7 @@ class CallbackBlockArgument:
     def serialize(self):
         return {
             "type": ALLOWED_ARGUMENT_TYPES[self.type],
-            "values": {
-                "callback": self.callback
-            },
+            "values": {"callback": self.callback},
         }
 
 
@@ -156,7 +154,5 @@ class CollectionBlockArgument:
     def serialize(self):
         return {
             "type": "string",
-            "values": {
-                "collection": self.collection.name
-            },
+            "values": {"collection": self.collection.name},
         }
