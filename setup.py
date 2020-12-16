@@ -1,14 +1,14 @@
-from setuptools import setup
+import setuptools
 
-setup(
+setuptools.setup(
     name="programaker_bridge",
-    version="0.0.4dev3",
+    version="0.0.4dev4",
     description="Helper to build PrograMaker bridges.",
     author="kenkeiras",
     author_email="kenkeiras@codigoparallevar.com",
     url="https://gitlab.com/programaker-project/bridges/programaker-python-lib",
     license="Apache License 2.0",
-    packages=["programaker_bridge"],
+    packages=setuptools.find_packages(),
     scripts=[],
     classifiers=[
         "Programming Language :: Python :: 3",
