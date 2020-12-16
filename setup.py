@@ -20,4 +20,9 @@ setup(name='programaker_bridge',
       install_requires=[
           'websocket_client'
       ],
-      zip_safe=False)
+    extras_require={
+        "storage": ["sqlalchemy"],
+        "full": ["sqlalchemy"],
+    },
+    zip_safe=True,
+)
