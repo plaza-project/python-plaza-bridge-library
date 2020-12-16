@@ -1,0 +1,7 @@
+image: python:3
+
+type-check:
+  script:
+    - pip install -r requirements.txt
+    - pip install -r dev-requirements.txt
+    - mypy programaker_bridge

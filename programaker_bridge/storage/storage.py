@@ -2,11 +2,13 @@ import copy
 import json
 import os
 import re
-from typing import Dict
+from typing import Any, Dict
 
 import sqlalchemy
 from sqlalchemy import Column, MetaData, String, Table, Text
 from xdg import XDG_DATA_HOME
+
+Json = Any  # TODO: Properly define json-ifiable types
 
 # Models
 metadata = MetaData()
@@ -20,11 +22,11 @@ Users = Table(
 )
 
 # Storage management
-def serialize_data(data: Dict[str, any]) -> str:
+def serialize_data(data: Dict[str, Json]) -> str:
     return json.dumps(data, sort_keys=True)
 
 
-def deserialize_data(data: str) -> Dict[str, any]:
+def deserialize_data(data: str) -> Dict[str, Json]:
     return json.loads(data)
 
 
@@ -88,7 +90,7 @@ class Storage:
                 os.path.join(data_directory, "db.sqlite3")
             )
         else:
-            CONNECTION_STRING = os.getenv(DB_PATH_ENV)
+            CONNECTION_STRING = os.environ[DB_PATH_ENV]
 
         if CONNECTION_STRING.startswith("sqlite"):
             db_file = re.sub("sqlite.*:///", "", CONNECTION_STRING)
@@ -101,7 +103,7 @@ class Storage:
     def _connect_db(self):
         return EngineContext(self.engine)
 
-    def create_user(self, user_id: str, data: Dict[str, any]) -> bool:
+    def create_user(self, user_id: str, data: Dict[str, Json]) -> bool:
         with self._connect_db() as conn:
             user = conn.execute(
                 sqlalchemy.select([Users.c.id, Users.c.data]).where(
