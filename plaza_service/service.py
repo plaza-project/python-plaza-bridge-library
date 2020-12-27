@@ -1,9 +1,10 @@
 import asyncio
-import websockets
 import json
 import logging
-import traceback
 import time
+import traceback
+
+import websockets
 
 from . import protocol
 from .service_configuration import ServiceConfiguration
@@ -33,8 +34,9 @@ class AnswerHandler:
 
 
 class PlazaService:
-    def __init__(self, service_url):
+    def __init__(self, service_url, service_token):
         self.service_url = service_url
+        self.service_token = service_token
         self.INTERNAL_FUNCTION_NAMES = {"__ping": self.__answer_ping}
         self.__registerer = None
         self.loop = None
@@ -204,6 +206,16 @@ class PlazaService:
     async def __connect(self):
         async with websockets.connect(self.service_url) as websocket:
             self.websocket = websocket
+
+            await websocket.send(
+                json.dumps(
+                    {
+                        "type": protocol.AUTHENTICATION,
+                        "value": {"token": self.service_token},
+                    }
+                )
+            )
+
             logging.info("Connected successfully")
             configuration = self.handle_configuration()
             self.__registerer = configuration.registration
@@ -239,4 +251,3 @@ class PlazaService:
             logging.debug("Waiting {}s for reconnection".format(SLEEP_BETWEEN_RETRIES))
             time.sleep(SLEEP_BETWEEN_RETRIES)
             logging.debug("Reconnecting")
-
