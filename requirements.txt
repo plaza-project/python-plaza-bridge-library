@@ -1,2 +1,5 @@
 # Websocket connection
 websocket_client
+
+# XDG variables
+xdg

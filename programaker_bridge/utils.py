@@ -9,16 +9,18 @@ KNOWN_TYPES = {
     float: "number",
 }
 
+
 def serialize_type(_type):
     if _type is None:
         return None
 
-    assert(isinstance(_type, type))
+    assert isinstance(_type, type)
 
     if _type not in KNOWN_TYPES:
         raise Exception("Unknown type: {}".format(_type))
 
     return KNOWN_TYPES[_type]
+
 
 def get_file_hash(f):
     # Save current position to restore in the end
@@ -37,4 +39,4 @@ def get_file_hash(f):
     # Go back to previous position
     f.seek(pos)
 
-    return ('sha256', hashing.hexdigest())
+    return ("sha256", hashing.hexdigest())

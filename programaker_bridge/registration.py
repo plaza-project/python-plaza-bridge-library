@@ -1,15 +1,18 @@
-import shlex
-import re
 import html
+import logging
+import re
+import shlex
 
 CHUNKS_RE = re.compile(r"([^<>]+|<[^>]+>)")
-CHUNK_TYPES = ("u", "a", "input", "value", "autolink", "console")
+CHUNK_TYPES = ("u", "a", "input", "value", "autolink", "console", "img")
 CONTAINER_CHUNKS = {
     "u": {"fields": {}},
     "autolink": {"fields": {}},
     "a": {"fields": {"href"}},
     "console": {"fields": {}},
 }
+# Don't have an </img> tag, for example
+ITEM_CHUNKS = {"img": {"fields": {"src", "alt"}}}
 
 
 def parse_text(text, replacements={}):
@@ -22,7 +25,7 @@ def parse_text(text, replacements={}):
         if chunk.startswith("<"):
             assert chunk.endswith(">")
             chunk = chunk[1:-1].strip()
-            tagName = chunk.split(" ", 1)[0]
+            tagName = re.split("\s", chunk, 1)[0].lower()
             properties = {}
             if chunk.count(" ") > 0:
                 property_chunks = shlex.split(chunk.split(" ", 1)[1])
@@ -37,7 +40,9 @@ def parse_text(text, replacements={}):
             if endTag:
                 tagName = tagName[1:]
 
-            if replacements is not None and chunk in replacements:
+            if tagName.rstrip("/") == "br":
+                current_chunk["content"].append({"type": "text", "value": "\n"})
+            elif replacements is not None and chunk in replacements:
                 current_chunk["content"].append(replacements[chunk])
             elif tagName not in CHUNK_TYPES:
                 raise Exception("Unknown chunk type “{}”".format(chunk))
@@ -59,14 +64,31 @@ def parse_text(text, replacements={}):
                         "content": [],
                     }
 
-                elif tagName in CONTAINER_CHUNKS:
-                    parent_chunks.append(current_chunk)
-                    current_chunk = {
-                        "type": "tag",
-                        "tag": tagName,
-                        "properties": properties,
-                        "content": [],
-                    }
+                elif tagName in ITEM_CHUNKS:
+                    if "/" in properties:
+                        del properties["/"]
+
+                    to_del = []
+                    for prop in properties:
+                        if prop not in ITEM_CHUNKS[tagName].get("fields", {}):
+                            logging.warning(
+                                "Property '{}' not supported in <{}>".format(
+                                    prop, tagName
+                                )
+                            )
+                            to_del.append(prop)
+
+                    for prop in to_del:
+                        del properties[prop]
+
+                    current_chunk["content"].append(
+                        {
+                            "type": "tag",
+                            "tag": tagName,
+                            "properties": properties,
+                            "content": [],
+                        }
+                    )
 
                 else:
                     current_chunk["content"].append(
