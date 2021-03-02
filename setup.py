@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="programaker_bridge",
-    version="0.0.4.dev6",
+    version="0.0.4.dev7",
     description="Helper to build PrograMaker bridges.",
     author="kenkeiras",
     author_email="kenkeiras@codigoparallevar.com",

@@ -1,4 +1,3 @@
-import html
 import logging
 import re
 import shlex
@@ -100,9 +99,7 @@ def parse_text(text, replacements={}):
                         }
                     )
         else:
-            current_chunk["content"].append(
-                {"type": "text", "value": html.escape(chunk)}
-            )
+            current_chunk["content"].append({"type": "text", "value": chunk})
 
     assert len(parent_chunks) == 0
     return serialized_chunks["content"]
@@ -124,7 +121,7 @@ class MessageBasedServiceRegistration:
             replacements = {
                 "registration_code": {
                     "type": "console",
-                    "value": html.escape("/register " + extra_data.user_id),
+                    "value": "/register " + extra_data.user_id,
                 }
             }
 
