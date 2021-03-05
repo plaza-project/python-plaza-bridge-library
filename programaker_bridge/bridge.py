@@ -13,7 +13,9 @@ import uuid
 import websocket
 
 from . import protocol, utils
-from .blocks import BlockType, CallbackBlockArgument, ServiceBlock, ServiceTriggerBlock
+from .blocks import (BlockType, CallbackBlockArgument,
+                     CallbackSequenceBlockArgument, ServiceBlock,
+                     ServiceTriggerBlock)
 from .extra_data import ExtraData
 from .service_configuration import ServiceConfiguration
 
@@ -586,7 +588,12 @@ class ProgramakerBridge:
     def _handle_data_callback(self, value, message_id, extra_data):
         def _handling():
             try:
-                response = self.callbacks_by_name[value["callback"]](extra_data)
+                if "sequence_id" in value and value["sequence_id"] is not None:
+                    response = self.callbacks_by_name[value["callback"]](
+                        value["sequence_id"], extra_data
+                    )
+                else:
+                    response = self.callbacks_by_name[value["callback"]](extra_data)
             except:
                 logging.warn(traceback.format_exc())
                 self._send_raw(json.dumps({"message_id": message_id, "success": False}))
@@ -671,6 +678,13 @@ class ProgramakerBridge:
             if isinstance(arg, CallbackBlockArgument):
                 if callable(arg.callback):  # A function, so a callback
                     arg.callback = self.callbacks[arg.callback][0]
+            elif isinstance(arg, CallbackSequenceBlockArgument):
+                new_calls = []
+                for cb in arg.callback_sequence:
+                    if callable(cb):  # A function, so a callback
+                        cb = self.callbacks[cb][0]
+                    new_calls.append(cb)
+                arg.callback_sequence = new_calls
 
         return arguments
 

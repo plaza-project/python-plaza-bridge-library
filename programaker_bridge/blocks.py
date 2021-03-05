@@ -147,6 +147,21 @@ class CallbackBlockArgument:
         }
 
 
+class CallbackSequenceBlockArgument:
+    def __init__(self, type, callback_sequence):
+        if type not in ALLOWED_ARGUMENT_TYPES:
+            raise TypeError("Type “{}” not allowed".format(type))
+
+        self.type = type
+        self.callback_sequence = callback_sequence
+
+    def serialize(self):
+        return {
+            "type": ALLOWED_ARGUMENT_TYPES[self.type],
+            "values": {"callback_sequence": self.callback_sequence},
+        }
+
+
 class CollectionBlockArgument:
     def __init__(self, collection):
         self.collection = collection
