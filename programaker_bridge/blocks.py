@@ -90,6 +90,8 @@ class ServiceTriggerBlock:
 
 
 ALLOWED_ARGUMENT_TYPES = {
+    "struct": "struct",
+    "any": "any",
     str: "string",
     int: "integer",
     float: "float",
@@ -102,6 +104,8 @@ LIST_VARIABLE_CLASS = "list"
 
 ALLOWED_VARIABLE_CLASSES = {
     list: LIST_VARIABLE_CLASS,
+    "struct": SINGLE_VARIABLE_CLASS,
+    "any": SINGLE_VARIABLE_CLASS,
     str: SINGLE_VARIABLE_CLASS,
     int: SINGLE_VARIABLE_CLASS,
     float: SINGLE_VARIABLE_CLASS,
@@ -123,13 +127,19 @@ class BlockArgument:
 
 
 class VariableBlockArgument:
-    def __init__(self, _class=None):
-        if _class not in ALLOWED_VARIABLE_CLASSES:
-            raise TypeError("Variable class “{}” not allowed".format(_class))
-        self.variable_class = ALLOWED_VARIABLE_CLASSES[_class]
+    def __init__(self, _type=None):
+        if _type not in ALLOWED_VARIABLE_CLASSES:
+            raise TypeError("Variable class “{}” not allowed".format(_type))
+        self.variable_class = ALLOWED_VARIABLE_CLASSES[_type]
+        self._type = _type
 
     def serialize(self):
-        return {"type": "variable", "class": self.variable_class}
+        serial_type = ALLOWED_ARGUMENT_TYPES.get(self._type, None)
+        return {
+            "type": "variable",
+            "class": self.variable_class,
+            "var_type": serial_type,
+        }
 
 
 class CallbackBlockArgument:
