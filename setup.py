@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="programaker_bridge",
-    version="0.0.4.dev9",
+    version="0.0.4.dev10",
     description="Helper to build PrograMaker bridges.",
     author="kenkeiras",
     author_email="kenkeiras@codigoparallevar.com",
@@ -18,7 +18,7 @@ setuptools.setup(
         "Intended Audience :: Developers",
     ],
     include_package_data=False,
-    install_requires=["websocket_client"],
+    install_requires=["websocket_client", "xdg"],
     extras_require={
         "storage": ["sqlalchemy"],
         "full": ["sqlalchemy"],
