@@ -7,6 +7,7 @@ KNOWN_TYPES = {
     bool: "boolean",
     int: "integer",
     float: "number",
+    list: "list",
     "any": "any",
     "struct": "struct",
 }
