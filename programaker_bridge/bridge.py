@@ -213,7 +213,7 @@ class ProgramakerBridge:
         self.on_ready = None
 
     ## Decorators
-    def getter(self, id, message, arguments=[], block_result_type=None):
+    def getter(self, id, message, arguments=[], block_result_type=None, show_in_toolbox=True):
         arguments = self._resolve_arguments(arguments)
 
         def _decorator_getter(func):
@@ -230,6 +230,7 @@ class ProgramakerBridge:
                     block_type=BlockType.GETTER,
                     block_result_type=utils.serialize_type(block_result_type),
                     arguments=arguments,
+                    show_in_toolbox=show_in_toolbox,
                     save_to=None,
                 ),
                 function=func,
@@ -259,7 +260,7 @@ class ProgramakerBridge:
             name = param
             return _decorator_callback
 
-    def operation(self, id, message, arguments=[], save_to=None):
+    def operation(self, id, message, arguments=[], save_to=None, show_in_toolbox=True):
         arguments = self._resolve_arguments(arguments)
 
         def _decorator_operation(func):
@@ -277,6 +278,7 @@ class ProgramakerBridge:
                     block_result_type=None,
                     arguments=arguments,
                     save_to=save_to,
+                    show_in_toolbox=show_in_toolbox
                 ),
                 function=func,
             )

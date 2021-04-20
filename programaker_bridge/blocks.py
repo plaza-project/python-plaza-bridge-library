@@ -30,6 +30,7 @@ class ServiceBlock:
         block_result_type=None,
         arguments=[],
         save_to=None,
+        show_in_toolbox=True,
     ):
         self.id = id
         self.function_name = function_name
@@ -38,6 +39,7 @@ class ServiceBlock:
         self.block_result_type = block_result_type
         self.arguments = arguments
         self.save_to = save_to
+        self.show_in_toolbox = show_in_toolbox
 
     def serialize(self):
         return {
@@ -48,6 +50,7 @@ class ServiceBlock:
             "block_type": self.block_type.value,
             "block_result_type": self.block_result_type,
             "save_to": self.save_to,
+            "show_in_toolbox": self.show_in_toolbox,
         }
 
 
