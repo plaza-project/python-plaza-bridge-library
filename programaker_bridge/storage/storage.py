@@ -83,12 +83,15 @@ class Storage:
         DB_PATH_ENV = name.upper() + "_BRIDGE_DB_PATH"
 
         if os.getenv(DB_PATH_ENV, None) is None:
-            data_directory = os.path.join(
-                XDG_DATA_HOME, "programaker", "bridges", name.lower()
-            )
-            CONNECTION_STRING = "sqlite:///{}".format(
-                os.path.join(data_directory, "db.sqlite3")
-            )
+            if os.getenv("CONNECTION_STRING", None) is None:
+                data_directory = os.path.join(
+                    XDG_DATA_HOME, "programaker", "bridges", name.lower()
+                )
+                CONNECTION_STRING = "sqlite:///{}".format(
+                    os.path.join(data_directory, "db.sqlite3")
+                )
+            else:
+                CONNECTION_STRING = os.environ["CONNECTION_STRING"]
         else:
             CONNECTION_STRING = os.environ[DB_PATH_ENV]
 
@@ -116,13 +119,17 @@ class Storage:
             conn.execute(insert)
             return True
 
-    def on_user(self, user_id: str, autosave=True) -> OnUserContext:
+    def on_user(self, user_id: str, autosave=True, autocreate=False) -> OnUserContext:
         conn = self.engine.connect()
         user = conn.execute(
             sqlalchemy.select([Users.c.id, Users.c.data]).where(Users.c.id == user_id)
         ).fetchone()
 
         if user is None:
-            raise Exception(f"User {user_id} not found")
+            if not autocreate:
+                raise Exception(f"User {user_id} not found")
+            if not self.create_user(user_id, {}):
+                raise Exception(f"Cannot create user {user_id} (not existing before either)")
+            return self.on_user(user_id, autosave=autosave, autocreate=False)
 
         return OnUserContext(self.engine, conn, user, autosave)
